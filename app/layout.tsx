@@ -1,99 +1,185 @@
-import "./globals.css";
-import Script from "next/script";
-import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
+import {
+    CalendarIcon,
+    CubeIcon,
+    DownloadIcon,
+    LapTimerIcon,
+    RocketIcon,
+    Share1Icon,
+} from "@radix-ui/react-icons";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Metadata, ResolvingMetadata } from "next";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { humanDuration, humanSize } from "@/lib/utils";
 import { SITENAME } from "@/lib/constants";
-import { ThemeProvider } from "@/components/theme-provider";
+import Script from "next/script";
 
-const font = Nunito({ subsets: ["latin"] });
+import { Button } from "@/components/ui/button";
+import CopyButton from "@/components/copy-button";
+import LikeButton from "@/components/like-button";
+import Link from "next/link";
+import MessageBox from "@/components/message-box";
+import React from "react";
+import SearchCardList from "@/components/search/search-list";
+import doodstream from "@/lib/doodstream";
 
-export const metadata: Metadata = {
-    title: `${SITENAME} - Video Bokep Indo Viral Terbaru`,
-    description: `${SITENAME} Video Bokep Indo Jepang Jav Barat Simontok Viral Terbaru Bocil Ngentot Jilbab Smp Mama Sma korea china tante live paksa ngentot abg cewek pijat pelajar.`,
-    metadataBase: new URL("https://bokepbinor.pages.dev"),
-    alternates: {
-        canonical: `/`,
-    },
-    openGraph: {
-        title: `${SITENAME} - Video Bokep Indo Jepang Barat Viral Terbaru`,
-        description: `${SITENAME} Video Bokep Indo Jepang Jav Barat Simontok Viral Terbaru Bocil Ngentot Jilbab Smp Mama Sma korea china tante live paksa ngentot abg cewek pijat pelajar.`,
-        url: `/`,
-        type: `website`,
-    },
-    verification: {
-        google: 'vhg92tbaqR6wS-9BFxSb6P1mw4vPDSg-Rwko1Jx2BE0',
-        yandex: 'e10955d30a7ebb1c',
-    },
+type PageProps = {
+    params: { [key: string]: string | string[] | undefined };
 };
 
-export const runtime = "edge";
+export async function generateMetadata(
+    { params }: PageProps,
+    parent: ResolvingMetadata
+): Promise<Metadata> {
+    const data = await doodstream.getFile({ file_code: params.id as string });
+     const upstream = await doodstream.getUpstream();
+    if (data.status !== 200) {
+        return {
+            title: data.msg,
+            description: "Something went wrong. Please try again later.",
+        };
+    }
 
-export default function RootLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    const jsonLd = {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": `${SITENAME}`,
-        "description": `${SITENAME} Video Bokep Indo Jepang Jav Barat Simontok Viral Terbaru Bocil Ngentot Jilbab Smp Mama Sma korea china tante live paksa ngentot abg cewek pijat pelajar.`,
-        "logo": "https://bokepbinor.pages.dev/favicon.ico",
-        "url": "https://bokepbinor.pages.dev",
-        "founder":{
-            "@type":"Person",
-            "name":"admin",
-            "url":"https://bokepbinor.pages.dev"
-            },
-            "foundingDate":"2024-01-09"
-        }
-        const jsonLd1 = {
-            "@context": "https://schema.org",
-        "@type": "WebPage",
-        "name": `${SITENAME}`,
-        "url": "https://bokepbinor.pages.dev",
-        "description": `${SITENAME} Video Bokep Indo Jepang Jav Barat Simontok Viral Terbaru Bocil Ngentot Jilbab Smp Mama Sma korea china tante live paksa ngentot abg cewek pijat pelajar.`,
-        "image": "https://bokepbinor.pages.dev/favicon.ico",
-        "potentialAction":{
-            "@type":"ReadAction",
-            "target":"https://bokepbinor.pages.dev"}
+    const file = data.result[0];
+    const title = `Bokep ${file.title}`;
+    const description = `Video Bokep ${file.title} di ${SITENAME} Video Bokep Indo Bocil Ngentot Jilbab Smp Mama Viral`;
+    const image = file.splash_img;
+    const previousOgImages = (await parent).openGraph?.images || [];
+    const previousTwImages = (await parent).twitter?.images || [];
+
+    return {
+        title,
+        description,
+        twitter: {
+            title,
+            description,
+            images: [...previousTwImages, image],
+        },
+        openGraph: {
+            title,
+            description,
+            images: [...previousOgImages, image],
+            url: `/v/${file.filecode}#${file.title}`,
+            type: `article`,
+        },
+        alternates: {
+            canonical: `/v/${file.filecode}#${file.title}`,
+        },
+    };
+}
+
+export default async function Video({ params }: PageProps) {
+    const data = await doodstream.getFile({ file_code: params.id as string });
+    const upstream = await doodstream.getUpstream();
+
+    if (data.status !== 200) {
+        return (
+            <MessageBox title={data.msg} countdown={30} variant="error">
+                <p className="text-center">
+                    Something went wrong. Please try again later.
+                </p>
+            </MessageBox>
+        );
+    }
+
+    const file = data.result[0];
+	const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: `Bokep ${file.title}`,
+        image: file.splash_img,
+        description: `Video Bokep ${file.title} di ${SITENAME} Video Bokep Indo Bocil Ngentot Jilbab Smp Mama Viral`,
+        url: `https://bokepbinor.pages.dev/v/${file.filecode}#${file.title}`,
+        datePublished: new Date(
+            file.uploaded + ".000Z"
+        ).toISOString(),
+        publisher: {
+            '@type': 'Organization',
+            name: `${SITENAME}`,
+            logo: 'https://bokepbinor.pages.dev/favicon.ico'},
+            author: {
+                '@type': 'Person',
+                name: 'admin',
+                url: 'https://bokepbinor.pages.dev'
+              }
         }
         const jsonLd2 = {
-            "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": `${SITENAME}`,
-        "url": "https://bokepbinor.pages.dev",
-        "description": `${SITENAME} Video Bokep Indo Jepang Jav Barat Simontok Viral Terbaru Bocil Ngentot Jilbab Smp Mama Sma korea china tante live paksa ngentot abg cewek pijat pelajar.`,
-        "potentialAction": { 
-        "@type": "SearchAction", 
-          "target": "https://bokepbinor.pages.dev/?q={search_term}", 
-            "query-input": "required name=search_term"}
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: `Bokep ${file.title}`,
+        image: file.splash_img,
+        description: `Video Bokep ${file.title} di ${SITENAME} Video Bokep Indo Bocil Ngentot Jilbab Smp Mama Viral`,
+        url: `https://bokepbinor.pages.dev/v/${file.filecode}#${file.title}`,
+        datePublished: new Date(
+            file.uploaded + ".000Z"
+        ).toISOString(),
+        publisher: {
+            '@type': 'Organization',
+            name: `${SITENAME}`,
+            logo: 'https://bokepbinor.pages.dev/favicon.ico'},
+        author: {
+                '@type': 'Person',
+                name: 'admin',
+                url: 'https://bokepbinor.pages.dev'},
+        interactionStatistic: {
+            '@type': `InteractionCounter`,
+                userInteractionCount: `${file.views}`,
+            interactionType: {
+                '@type': `ReadAction`,
+                target: `https://bokepbinor.pages.dev/v/${file.filecode}#${file.title}`
+            }  
         }
+        }
+        
     return (
-        <html lang="en" suppressHydrationWarning>
-            <body className={font.className}>
-                <ThemeProvider
-                    attribute="class"
-                    defaultTheme="system"
-                    enableSystem
-                    disableTransitionOnChange
-                >
+        <div className="grid col-span-full gap-4 md:gap-4 md:mx-10" itemProp="video" itemScope itemType="http://schema.org/VideoObject">
+<meta itemProp="author" content="admin" />
+<meta itemProp="name" content={`Bokep ${file.title}`} />
+<meta itemProp="description" content={`Video Bokep ${file.title} di ${SITENAME} Video Bokep Indo Bocil Ngentot Jilbab Smp Mama Viral`} />
+<meta itemProp="duration" content={`${file.length}`} />
+<meta itemProp="thumbnailUrl" content={`${file.splash_img}`} />
+<meta itemProp="embedURL" content={`https://doodstream.com/e/${file.filecode}#${file.title}`} />
+<meta itemProp="uploadDate" content={`${new Date(
+            file.uploaded + ".000Z"
+        ).toISOString()}`} />
+        <section>
+        {/* Add JSON-LD to your page */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd1) }}
-        />
-        <script
-          type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd2) }}
         />
-                    {children}
-                </ThemeProvider>
-            </body>
+        {/* ... */}
+        </section>
+            <iframe
+                className="w-full h-[30vh] md:h-[55vh] lg:h-[70vh]"
+                src={`https://doodstream.com/e/${file.filecode}`}
+                scrolling="no"
+                title={file.title}
+                frameBorder={0}
+                allowFullScreen={true}
+            ></iframe>
+            <Card className="mx-2 mb-8">
+                <CardHeader>
+                    <CardTitle className="text-xl md:text-3xl font-bold">
+                        Bokep {file.title}
+                    </CardTitle>
+                </CardHeader>
+		<CardContent><center><Script
+      dangerouslySetInnerHTML={{__html: `(adsbyjuicy = window.adsbyjuicy || []).push({'adzone':1052551})`,}}
+   /><Script strategy="lazyOnload" data-cfasync="false" async src="https://poweredby.jads.co/js/jads.js"/><ins id="1052551" data-width="300" data-height="262"></ins></center>
+       		     <p>Video Bokep {file.title} di {SITENAME} Video Bokep Indo Bocil Ngentot Jilbab Smp Mama Viral Sma Tante Live Paksa Bokep Abg Jepang Jav Barat Korea China Terbaru Video Bokep Indo Jepang Jav Barat Simontok Viral Terbaru Bocil Ngentot Jilbab Smp Mama Sma hub sotwe olmek avtube pijat pure gudang pemerkosaan rumah tobrut inggris ngintip vcs binor yandex update remaja {SITENAME} wiki raja bokeptube full porno bokepbinorma simontok bokepind playbokep indobokep xpanasonline indoh janda streaming jepang barat korea japan jav cina japanese china rusia arab india thailand hd anime hentai bokepind gudang avtub pijat sotwe rumah pemerkosaan inggris xpanas pure tobrut vcs ngintip binor remaja yandex update perselingkuhan wiki raja full com porno indoh</p>
+		</CardContent>
+            </Card><Script
+		dangerouslySetInnerHTML={{__html: `(adsbyjuicy = window.adsbyjuicy || []).push({'adzone':1052552})`,}}
+   /><Script data-cfasync="false" async src="https://poweredby.jads.co/js/jads.js"/><ins id="1052552" data-width="300" data-height="262"></ins>
 <Script src="https://js.juicyads.com/jp.php?c=947403z2v256s2x2w264x294&u=http%3A%2F%2Fwww.juicyads.rocks"/>
-        </html>
+            <h2 className="text-2xl font-bold text-center my-4">
+                Related Video Bokep {file.title}
+            </h2>
+            <SearchCardList query={file.title.split(" ")[2]} />
+        </div>
     );
 }
